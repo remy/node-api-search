@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset=utf-8 />
+<title>Node API search</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+form {
+  padding-top: 20px;
+}
+
+#result {
+  padding-bottom: 20px;
+}
+
+input {
+  display: block;
+  width: 50%;
+  font-size: 20px;
+  font-family: Monaco, Consolas, "Lucida Console", monospace;
+  padding: 5px;
+  margin-bottom: 20px;
+}
+
+.possibles li {
+  line-height: 30px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.possibles li:hover {
+  font-weight: bold;
+}
+
+</style>
+</head>
+<body>
+<form>
+  <input type="text">  
+</form>
+<div id="result"></div>
+<script src="jquery.min.js"></script>
+<script>
+function throttle(fn, delay) {
+  var timer = null;
+  return function () {
+    var context = this, args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      fn.apply(context, args);
+    }, delay);
+  };
+}
+
+function showApi(method) {
+  $.ajax({
+    url: '/api/' + method,
+    success: function (html) {
+      $result.html(html);
+    }
+  });
+}
+
+var $input = $('input'), // does this even matter that there could be more than one?
+    $result = $('#result');
+    
+$('form').submit(function (event) {
+  event.preventDefault();
+  $input.trigger('keyup');
+});
+
+$(document).delegate('ul.possibles li', 'click', function () {
+  $input.val(this.id).trigger('keyup');
+});
+
+$input.bind('keyup', throttle(function () {
+  var method = $input.val();
+  history.pushState(method, method, method);
+  showApi(method);
+}, 250));
+
+window.onpopstate = function (event) {
+  if (event.state !== null) {
+    $input.val(event.state);
+    showApi(event.state.replace(/^\//, '')); // remove the leading slash      
+  }
+};
+
+</script>
+</body>
+</html>
